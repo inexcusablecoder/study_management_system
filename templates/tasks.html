@@ -94,9 +94,65 @@
                   {% endif %}
                   <span class="tag tag-{{ task.status }}">{{ task.status.replace('_', ' ').title() }}</span>
                 </div>
+
+                <!-- Inline Edit Form (hidden by default) -->
+                <form action="{{ url_for('edit_task', task_id=task.id) }}" method="post"
+                      id="edit-form-{{ task.id }}" style="display:none;margin-top:14px">
+                  <div class="form-stack">
+                    <div class="form-group">
+                      <label>Title</label>
+                      <input type="text" name="title" value="{{ task.title }}" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label>Description</label>
+                      <textarea name="description" rows="2" class="form-input">{{ task.description }}</textarea>
+                    </div>
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label>Priority</label>
+                        <select name="priority" class="form-input">
+                          <option value="low" {% if task.priority=='low' %}selected{% endif %}>🟢 Low</option>
+                          <option value="medium" {% if task.priority=='medium' %}selected{% endif %}>🟡 Medium</option>
+                          <option value="high" {% if task.priority=='high' %}selected{% endif %}>🟠 High</option>
+                          <option value="urgent" {% if task.priority=='urgent' %}selected{% endif %}>🔴 Urgent</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Status</label>
+                        <select name="status" class="form-input">
+                          <option value="pending" {% if task.status=='pending' %}selected{% endif %}>⏳ Pending</option>
+                          <option value="in_progress" {% if task.status=='in_progress' %}selected{% endif %}>🔄 In Progress</option>
+                          <option value="completed" {% if task.status=='completed' %}selected{% endif %}>✅ Completed</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label>Subject</label>
+                        <select name="subject_id" class="form-input">
+                          <option value="">— None —</option>
+                          {% for s in subjects %}
+                            <option value="{{ s.id }}" {% if task.subject_id==s.id %}selected{% endif %}>{{ s.name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" name="due_date" value="{{ task.due_date.isoformat() if task.due_date else '' }}" class="form-input">
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button type="submit" class="btn-primary" style="padding:8px 16px;font-size:13px">💾 Save</button>
+                      <button type="button" class="btn-action btn-warning"
+                              onclick="document.getElementById('edit-form-{{ task.id }}').style.display='none'"
+                              style="width:auto;padding:8px 14px;font-size:13px">Cancel</button>
+                    </div>
+                  </div>
+                </form>
               </div>
             </div>
             <div class="task-actions">
+              <button class="btn-action btn-info" title="Edit task" onclick="toggleEdit({{ task.id }})">✏️</button>
               {% if task.status != 'completed' %}
                 <form action="{{ url_for('update_task_status', task_id=task.id) }}" method="post" style="display:inline">
                   <input type="hidden" name="status" value="completed">
@@ -131,4 +187,13 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEdit(taskId) {
+  const form = document.getElementById('edit-form-' + taskId);
+  form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+}
+</script>
 {% endblock %}

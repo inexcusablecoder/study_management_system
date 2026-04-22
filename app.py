@@ -193,6 +193,30 @@ def update_task_status(task_id):
     return redirect(request.referrer or url_for('tasks'))
 
 
+@app.route('/tasks/edit/<int:task_id>', methods=['POST'])
+@login_required
+def edit_task(task_id):
+    task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
+    title = request.form.get('title', '').strip()
+    if not title:
+        flash('Task title is required.', 'error')
+        return redirect(url_for('tasks'))
+    due_str  = request.form.get('due_date', '')
+    due_date = datetime.strptime(due_str, '%Y-%m-%d').date() if due_str else None
+    subj_id  = request.form.get('subject_id')
+    task.title       = title
+    task.description = request.form.get('description', '')
+    task.priority    = request.form.get('priority', 'medium')
+    task.status      = request.form.get('status', task.status)
+    task.due_date    = due_date
+    task.subject_id  = int(subj_id) if subj_id else None
+    if task.status == 'completed' and not task.completed_at:
+        task.completed_at = datetime.utcnow()
+    db.session.commit()
+    flash('Task updated successfully!', 'success')
+    return redirect(url_for('tasks'))
+
+
 @app.route('/tasks/delete/<int:task_id>', methods=['POST'])
 @login_required
 def delete_task(task_id):
