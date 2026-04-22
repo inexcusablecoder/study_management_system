@@ -383,6 +383,5 @@ def delete_goal(goal_id):
 # ─── App Init ──────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     with app.app_context():
-        db.drop_all()   # fresh start after model changes
-        db.create_all()
+        db.create_all()   # create tables if they don't exist (data is preserved)
     app.run(debug=True, port=5000)
