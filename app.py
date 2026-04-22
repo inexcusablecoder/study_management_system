@@ -5,7 +5,7 @@ from config import Config
 from models import db, User, Subject, Task, StudySession, Goal
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
-import json, random
+import json
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -73,9 +73,6 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        # Seed default subjects for new user
-        _seed_user_data(user)
-
         login_user(user)
         flash(f'Account created! Welcome to StudyFlow, {name}! 🎉', 'success')
         return redirect(url_for('dashboard'))
@@ -90,50 +87,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ─── Seed data per user ────────────────────────────────────────────────────────
-def _seed_user_data(user):
-    subjects = [
-        Subject(user_id=user.id, name='Mathematics',      color='#6366f1', description='Calculus, Algebra, Statistics', target_hours=20),
-        Subject(user_id=user.id, name='Physics',           color='#f43f5e', description='Mechanics, Thermodynamics',     target_hours=15),
-        Subject(user_id=user.id, name='Computer Science',  color='#10b981', description='Algorithms, OS, Networks',      target_hours=25),
-        Subject(user_id=user.id, name='Chemistry',         color='#f59e0b', description='Organic & Inorganic',           target_hours=12),
-        Subject(user_id=user.id, name='English',           color='#8b5cf6', description='Literature, Writing',           target_hours=8),
-    ]
-    db.session.add_all(subjects)
-    db.session.flush()
-
-    today = date.today()
-    tasks = [
-        Task(user_id=user.id, title='Complete Calculus Assignment',   subject_id=subjects[0].id, priority='high',   status='pending',     due_date=today + timedelta(days=2)),
-        Task(user_id=user.id, title="Read Newton's Laws Chapter",     subject_id=subjects[1].id, priority='medium', status='in_progress', due_date=today + timedelta(days=1)),
-        Task(user_id=user.id, title='Implement Binary Search Tree',   subject_id=subjects[2].id, priority='urgent', status='pending',     due_date=today),
-        Task(user_id=user.id, title='Chemistry Lab Report',           subject_id=subjects[3].id, priority='high',   status='completed',   due_date=today - timedelta(days=1), completed_at=datetime.utcnow()),
-        Task(user_id=user.id, title='Essay: Shakespeare Analysis',    subject_id=subjects[4].id, priority='low',    status='pending',     due_date=today + timedelta(days=5)),
-        Task(user_id=user.id, title='Practice Integration Problems',  subject_id=subjects[0].id, priority='medium', status='completed',   due_date=today - timedelta(days=3), completed_at=datetime.utcnow()),
-        Task(user_id=user.id, title='Thermodynamics Problem Set',     subject_id=subjects[1].id, priority='high',   status='pending',     due_date=today + timedelta(days=3)),
-        Task(user_id=user.id, title='Data Structures Quiz Prep',      subject_id=subjects[2].id, priority='urgent', status='in_progress', due_date=today + timedelta(days=1)),
-    ]
-    db.session.add_all(tasks)
-
-    for i in range(14):
-        d = today - timedelta(days=i)
-        for subj in subjects[:3]:
-            if random.random() > 0.4:
-                db.session.add(StudySession(
-                    user_id=user.id, subject_id=subj.id, date=d,
-                    duration_minutes=random.randint(30, 120),
-                    productivity_rating=random.randint(2, 5),
-                    notes=f'Study session on {d}'
-                ))
-
-    goals = [
-        Goal(user_id=user.id, title='Score 90%+ in Maths Final',    progress=65, target_date=today + timedelta(days=30)),
-        Goal(user_id=user.id, title='Complete Python DSA Course',    progress=40, target_date=today + timedelta(days=15)),
-        Goal(user_id=user.id, title='Finish Physics Textbook',       progress=80, target_date=today + timedelta(days=10)),
-        Goal(user_id=user.id, title='Write Research Paper',          progress=20, target_date=today + timedelta(days=45)),
-    ]
-    db.session.add_all(goals)
-    db.session.commit()
 
 
 # ─── Dashboard ─────────────────────────────────────────────────────────────────

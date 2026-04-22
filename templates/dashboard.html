@@ -3,12 +3,68 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
+
+{# ── Detect if this is a brand-new user (everything zero) ── #}
+{% set is_new_user = (total_tasks == 0 and subjects|length == 0) %}
+
+{% if is_new_user %}
+<!-- ═══════════════ WELCOME STATE (new user) ═══════════════ -->
+<div class="welcome-banner">
+  <div class="welcome-left">
+    <div class="welcome-emoji">👋</div>
+    <div>
+      <h2 class="welcome-title">Welcome to StudyFlow, {{ current_user.name.split()[0] }}!</h2>
+      <p class="welcome-sub">Your workspace is ready. Start by adding a subject, then track tasks and study sessions.</p>
+    </div>
+  </div>
+</div>
+
+<div class="getting-started-grid">
+  <a href="{{ url_for('subjects') }}" class="gs-card">
+    <div class="gs-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">📖</div>
+    <div class="gs-step">Step 1</div>
+    <div class="gs-title">Add a Subject</div>
+    <div class="gs-desc">Create subjects like Mathematics, Physics, or Computer Science to organise your work.</div>
+    <div class="gs-cta">Get Started →</div>
+  </a>
+  <a href="{{ url_for('tasks') }}" class="gs-card">
+    <div class="gs-icon" style="background:linear-gradient(135deg,#10b981,#059669)">✅</div>
+    <div class="gs-step">Step 2</div>
+    <div class="gs-title">Add Tasks</div>
+    <div class="gs-desc">Track assignments, homework, and readings with due dates and priority levels.</div>
+    <div class="gs-cta">Add Task →</div>
+  </a>
+  <a href="{{ url_for('sessions') }}" class="gs-card">
+    <div class="gs-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">⏱️</div>
+    <div class="gs-step">Step 3</div>
+    <div class="gs-title">Log Study Sessions</div>
+    <div class="gs-desc">Record how long you study each subject and rate your productivity.</div>
+    <div class="gs-cta">Log Session →</div>
+  </a>
+  <a href="{{ url_for('goals') }}" class="gs-card">
+    <div class="gs-icon" style="background:linear-gradient(135deg,#f43f5e,#e11d48)">🎯</div>
+    <div class="gs-step">Step 4</div>
+    <div class="gs-title">Set Goals</div>
+    <div class="gs-desc">Define academic targets, track progress percentages, and hit your milestones.</div>
+    <div class="gs-cta">Set Goals →</div>
+  </a>
+  <a href="{{ url_for('analytics') }}" class="gs-card">
+    <div class="gs-icon" style="background:linear-gradient(135deg,#38bdf8,#0284c7)">📊</div>
+    <div class="gs-step">Step 5</div>
+    <div class="gs-title">View Analytics</div>
+    <div class="gs-desc">Visualise your progress with study trend charts, subject breakdowns, and performance graphs.</div>
+    <div class="gs-cta">View Analytics →</div>
+  </a>
+</div>
+
+{% else %}
+<!-- ═══════════════ NORMAL DASHBOARD ═══════════════ -->
 <div class="dashboard-grid">
 
-  <!-- Stat Cards Row -->
+  <!-- Stat Cards -->
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-icon" style="background: linear-gradient(135deg,#6366f1,#8b5cf6)">✅</div>
+      <div class="stat-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">✅</div>
       <div class="stat-info">
         <div class="stat-value">{{ completed_tasks }}</div>
         <div class="stat-label">Tasks Completed</div>
@@ -16,7 +72,7 @@
       <div class="stat-badge badge-success">{{ completion_rate }}%</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background: linear-gradient(135deg,#f59e0b,#ef4444)">⏳</div>
+      <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">⏳</div>
       <div class="stat-info">
         <div class="stat-value">{{ pending_tasks + in_progress_tasks }}</div>
         <div class="stat-label">Tasks Remaining</div>
@@ -24,7 +80,7 @@
       <div class="stat-badge badge-warning">{{ in_progress_tasks }} active</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background: linear-gradient(135deg,#10b981,#059669)">📚</div>
+      <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)">📚</div>
       <div class="stat-info">
         <div class="stat-value">{{ today_hours }}h</div>
         <div class="stat-label">Studied Today</div>
@@ -32,7 +88,7 @@
       <div class="stat-badge badge-info">{{ total_week_hours }}h this week</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background: linear-gradient(135deg,#f43f5e,#e11d48)">🚨</div>
+      <div class="stat-icon" style="background:linear-gradient(135deg,#f43f5e,#e11d48)">🚨</div>
       <div class="stat-info">
         <div class="stat-value">{{ overdue_tasks }}</div>
         <div class="stat-label">Overdue Tasks</div>
@@ -55,13 +111,19 @@
       <div class="card-header">
         <h3>🎯 Subject Distribution</h3>
       </div>
-      <div class="chart-wrap">
-        <canvas id="subjectChart"></canvas>
-      </div>
+      {% if subj_data != '[]' %}
+        <div class="chart-wrap">
+          <canvas id="subjectChart"></canvas>
+        </div>
+      {% else %}
+        <div class="empty-state-sm" style="padding:60px 20px">
+          📖 Add subjects &amp; log sessions to see breakdown
+        </div>
+      {% endif %}
     </div>
   </div>
 
-  <!-- Bottom Row: Due Today + Goals + Subjects -->
+  <!-- Bottom Row -->
   <div class="bottom-row">
     <!-- Due Today -->
     <div class="list-card">
@@ -96,39 +158,53 @@
         <h3>🎯 Active Goals</h3>
         <a href="{{ url_for('goals') }}" class="btn-link">View All →</a>
       </div>
-      {% for goal in goals %}
-        <div class="goal-mini-row">
-          <div class="goal-mini-header">
-            <span class="goal-mini-title">{{ goal.title }}</span>
-            <span class="goal-mini-pct">{{ goal.progress }}%</span>
+      {% if goals %}
+        {% for goal in goals %}
+          <div class="goal-mini-row">
+            <div class="goal-mini-header">
+              <span class="goal-mini-title">{{ goal.title }}</span>
+              <span class="goal-mini-pct">{{ goal.progress }}%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width:{{ goal.progress }}%"></div>
+            </div>
           </div>
-          <div class="progress-bar-wrap">
-            <div class="progress-bar" style="width:{{ goal.progress }}%"></div>
-          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state-sm">
+          <a href="{{ url_for('goals') }}" class="btn-link">+ Set your first goal</a>
         </div>
-      {% endfor %}
+      {% endif %}
     </div>
 
-    <!-- Subjects Quick View -->
+    <!-- Subjects -->
     <div class="list-card">
       <div class="card-header">
         <h3>📖 Subjects</h3>
         <a href="{{ url_for('subjects') }}" class="btn-link">View All →</a>
       </div>
-      {% for subject in subjects %}
-        <div class="subject-mini-row">
-          <div class="subject-dot" style="background:{{ subject.color }}"></div>
-          <span class="subject-mini-name">{{ subject.name }}</span>
-          <span class="subject-mini-tasks">{{ subject.tasks|length }} tasks</span>
+      {% if subjects %}
+        {% for subject in subjects %}
+          <div class="subject-mini-row">
+            <div class="subject-dot" style="background:{{ subject.color }}"></div>
+            <span class="subject-mini-name">{{ subject.name }}</span>
+            <span class="subject-mini-tasks">{{ subject.tasks|length }} tasks</span>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state-sm">
+          <a href="{{ url_for('subjects') }}" class="btn-link">+ Add your first subject</a>
         </div>
-      {% endfor %}
+      {% endif %}
     </div>
   </div>
 
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
+{% if not is_new_user %}
 <script>
 const dailyLabels = {{ daily_labels|safe }};
 const dailyMinutes = {{ daily_minutes|safe }};
@@ -186,4 +262,5 @@ if (subjData.length > 0) {
   });
 }
 </script>
+{% endif %}
 {% endblock %}
