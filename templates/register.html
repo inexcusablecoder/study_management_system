@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | StudyFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+  <div class="auth-bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="auth-wrapper">
+    <!-- Left Panel -->
+    <div class="auth-left">
+      <div class="auth-brand">
+        <div class="brand-icon">📚</div>
+        <span class="brand-name">StudyFlow</span>
+      </div>
+      <h1 class="auth-headline">Start your<br><span class="gradient-text">study journey</span><br>today</h1>
+      <p class="auth-sub">Join students who track their progress, hit their goals, and study smarter.</p>
+      <div class="auth-steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">Create your free account</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">Add your subjects & tasks</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">Track progress & visualize performance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel — Register Form -->
+    <div class="auth-right">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <h2>Create your account 🎓</h2>
+          <p>Free forever. No credit card needed.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="auth-flash auth-flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form" id="regForm">
+          <div class="auth-form-group">
+            <label for="name">Full Name</label>
+            <div class="input-wrap">
+              <span class="input-icon">👤</span>
+              <input type="text" id="name" name="name" placeholder="e.g. Alex Johnson"
+                     required autocomplete="name" class="auth-input">
+            </div>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="email">Email Address</label>
+            <div class="input-wrap">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="email" name="email" placeholder="you@example.com"
+                     required autocomplete="email" class="auth-input">
+            </div>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="password" name="password" placeholder="Min. 6 characters"
+                     required minlength="6" class="auth-input" oninput="checkStrength(this.value)">
+              <button type="button" class="toggle-password" onclick="togglePwd('password', this)">👁</button>
+            </div>
+            <div class="password-strength" id="strengthBar">
+              <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <div class="strength-label" id="strengthLabel"></div>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="confirm_password">Confirm Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="confirm_password" name="confirm_password"
+                     placeholder="Repeat password" required class="auth-input"
+                     oninput="checkMatch()">
+              <button type="button" class="toggle-password" onclick="togglePwd('confirm_password', this)">👁</button>
+            </div>
+            <div class="match-msg" id="matchMsg"></div>
+          </div>
+
+          <button type="submit" class="auth-btn" id="regBtn">
+            <span>Create Account</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </form>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <div class="auth-switch">
+          Already have an account?
+          <a href="{{ url_for('login') }}" class="auth-link">Sign in →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePwd(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+      else { input.type = 'password'; btn.textContent = '👁'; }
+    }
+
+    function checkStrength(val) {
+      const fill  = document.getElementById('strengthFill');
+      const label = document.getElementById('strengthLabel');
+      let score = 0;
+      if (val.length >= 6)  score++;
+      if (val.length >= 10) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const pct = (score / 5) * 100;
+      fill.style.width = pct + '%';
+      const colors = ['#f43f5e','#f43f5e','#f59e0b','#f59e0b','#10b981','#10b981'];
+      const labels = ['','Weak','Fair','Good','Strong','Very Strong'];
+      fill.style.background = colors[score];
+      label.textContent = labels[score];
+      label.style.color  = colors[score];
+    }
+
+    function checkMatch() {
+      const pwd  = document.getElementById('password').value;
+      const conf = document.getElementById('confirm_password').value;
+      const msg  = document.getElementById('matchMsg');
+      if (!conf) { msg.textContent = ''; return; }
+      if (pwd === conf) { msg.textContent = '✓ Passwords match'; msg.style.color = '#10b981'; }
+      else              { msg.textContent = '✗ Passwords do not match'; msg.style.color = '#f43f5e'; }
+    }
+
+    document.getElementById('regForm').addEventListener('submit', function(e) {
+      const pwd  = document.getElementById('password').value;
+      const conf = document.getElementById('confirm_password').value;
+      if (pwd !== conf) { e.preventDefault(); return; }
+      const btn = document.getElementById('regBtn');
+      btn.innerHTML = '<span>Creating account…</span>';
+      btn.disabled = true;
+    });
+  </script>
+</body>
+</html>

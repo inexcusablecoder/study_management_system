@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Performance Analytics{% endblock %}
+
+{% block content %}
+<!-- Stats Summary Row -->
+<div class="stats-row" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">📚</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_study_hours }}h</div>
+      <div class="stat-label">Total Studied</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)">📋</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_sessions }}</div>
+      <div class="stat-label">Study Sessions</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">✅</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ completed_tasks }}</div>
+      <div class="stat-label">Tasks Done</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:linear-gradient(135deg,#f43f5e,#e11d48)">🎯</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ completion_rate }}%</div>
+      <div class="stat-label">Completion Rate</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="analytics-grid">
+  <!-- 30-day trend -->
+  <div class="chart-card full-width">
+    <div class="card-header"><h3>📈 Study Hours — Last 30 Days</h3></div>
+    <div class="chart-wrap tall">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Subject hours pie -->
+  <div class="chart-card">
+    <div class="card-header"><h3>🎨 Time Per Subject</h3></div>
+    <div class="chart-wrap">
+      <canvas id="subjectPieChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Task completion stacked bar -->
+  <div class="chart-card">
+    <div class="card-header"><h3>📊 Task Status by Subject</h3></div>
+    <div class="chart-wrap">
+      <canvas id="taskBarChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Productivity trend -->
+  <div class="chart-card full-width">
+    <div class="card-header"><h3>⭐ Productivity Rating — Last 14 Days</h3></div>
+    <div class="chart-wrap">
+      <canvas id="productivityChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Goals progress -->
+  <div class="chart-card full-width">
+    <div class="card-header"><h3>🎯 Goals Progress</h3></div>
+    <div class="goals-analytics-list">
+      {% for goal in goals %}
+        <div class="goal-analytics-row">
+          <div class="goal-analytics-name">{{ goal.title }}</div>
+          <div class="goal-analytics-bar-wrap">
+            <div class="goal-analytics-bar" style="width:{{ goal.progress }}%"></div>
+          </div>
+          <div class="goal-analytics-pct">{{ goal.progress }}%</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const labels30 = {{ labels_30|safe }};
+const minutes30 = {{ minutes_30|safe }};
+const subjNames = {{ subj_names|safe }};
+const subjHours = {{ subj_hours|safe }};
+const subjColors = {{ subj_colors|safe }};
+const taskSubjLabels = {{ task_subj_labels|safe }};
+const taskCompleted = {{ task_completed|safe }};
+const taskPending = {{ task_pending|safe }};
+const prodLabels = {{ prod_labels|safe }};
+const prodRatings = {{ prod_ratings|safe }};
+
+const gridColor = 'rgba(255,255,255,0.05)';
+const tickColor = '#94a3b8';
+
+// 30-day trend
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: labels30,
+    datasets: [{
+      label: 'Hours Studied',
+      data: minutes30,
+      fill: true,
+      backgroundColor: 'rgba(99,102,241,0.15)',
+      borderColor: '#6366f1',
+      borderWidth: 2,
+      pointBackgroundColor: '#6366f1',
+      pointRadius: 3,
+      tension: 0.4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: tickColor, maxTicksLimit: 10 } },
+      y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: v => v + 'h' }, beginAtZero: true }
+    }
+  }
+});
+
+// Subject pie
+new Chart(document.getElementById('subjectPieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: subjNames,
+    datasets: [{
+      data: subjHours,
+      backgroundColor: subjColors,
+      borderColor: '#0f172a',
+      borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: tickColor, padding: 12 } },
+      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}h` } }
+    },
+    cutout: '60%'
+  }
+});
+
+// Task stacked bar
+new Chart(document.getElementById('taskBarChart'), {
+  type: 'bar',
+  data: {
+    labels: taskSubjLabels,
+    datasets: [
+      { label: 'Completed', data: taskCompleted, backgroundColor: '#10b981', borderRadius: 4 },
+      { label: 'Pending/In Progress', data: taskPending, backgroundColor: '#f59e0b', borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: tickColor } } },
+    scales: {
+      x: { stacked: true, grid: { color: gridColor }, ticks: { color: tickColor } },
+      y: { stacked: true, grid: { color: gridColor }, ticks: { color: tickColor }, beginAtZero: true }
+    }
+  }
+});
+
+// Productivity line
+new Chart(document.getElementById('productivityChart'), {
+  type: 'line',
+  data: {
+    labels: prodLabels,
+    datasets: [{
+      label: 'Avg Productivity',
+      data: prodRatings,
+      fill: true,
+      backgroundColor: 'rgba(16,185,129,0.1)',
+      borderColor: '#10b981',
+      borderWidth: 2,
+      pointBackgroundColor: '#10b981',
+      pointRadius: 4,
+      tension: 0.4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: tickColor } },
+      y: { grid: { color: gridColor }, ticks: { color: tickColor }, min: 0, max: 5, stepSize: 1 }
+    }
+  }
+});
+</script>
+{% endblock %}

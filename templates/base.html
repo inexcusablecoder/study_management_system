@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="StudyFlow — Advanced Study Management System for students to track tasks, organize subjects, and visualize performance.">
+  <title>{% block title %}StudyFlow{% endblock %} | Study Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">📚</div>
+      <span class="brand-name">StudyFlow</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard') }}"  class="nav-link {% if request.endpoint == 'dashboard'  %}active{% endif %}">
+        <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+      </a>
+      <a href="{{ url_for('tasks') }}"      class="nav-link {% if request.endpoint == 'tasks'      %}active{% endif %}">
+        <span class="nav-icon">✅</span><span class="nav-label">Tasks</span>
+      </a>
+      <a href="{{ url_for('subjects') }}"   class="nav-link {% if request.endpoint == 'subjects'   %}active{% endif %}">
+        <span class="nav-icon">📖</span><span class="nav-label">Subjects</span>
+      </a>
+      <a href="{{ url_for('sessions') }}"   class="nav-link {% if request.endpoint == 'sessions'   %}active{% endif %}">
+        <span class="nav-icon">⏱️</span><span class="nav-label">Study Sessions</span>
+      </a>
+      <a href="{{ url_for('analytics') }}"  class="nav-link {% if request.endpoint == 'analytics'  %}active{% endif %}">
+        <span class="nav-icon">📊</span><span class="nav-label">Analytics</span>
+      </a>
+      <a href="{{ url_for('goals') }}"      class="nav-link {% if request.endpoint == 'goals'      %}active{% endif %}">
+        <span class="nav-icon">🎯</span><span class="nav-label">Goals</span>
+      </a>
+    </nav>
+
+    <!-- User profile + logout at bottom of sidebar -->
+    <div class="sidebar-user">
+      <div class="sidebar-user-info">
+        <div class="sidebar-avatar">{{ current_user.avatar_initials or current_user.name[:2].upper() }}</div>
+        <div class="sidebar-user-text">
+          <div class="sidebar-user-name">{{ current_user.name }}</div>
+          <div class="sidebar-user-email">{{ current_user.email }}</div>
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn" title="Sign Out">
+        <span>⏻</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+      <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+      <div class="topbar-right">
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="topbar-user-chip">
+          <div class="chip-avatar">{{ current_user.avatar_initials or current_user.name[:2].upper() }}</div>
+          <span class="chip-name">{{ current_user.name.split()[0] }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="topbar-logout" title="Sign Out">Sign Out</a>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">
+              {{ message }}
+              <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Content -->
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

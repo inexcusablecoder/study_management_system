@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Goals{% endblock %}
+{% block page_title %}Goals Tracker{% endblock %}
+
+{% block content %}
+<div class="page-layout">
+  <!-- Add Goal Form -->
+  <div class="side-form-card">
+    <h3 class="form-card-title">🎯 Add New Goal</h3>
+    <form action="{{ url_for('add_goal') }}" method="post" class="form-stack">
+      <div class="form-group">
+        <label>Goal Title *</label>
+        <input type="text" name="title" placeholder="e.g. Score 90% in Finals" required class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="2" placeholder="Details..." class="form-input"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Target Date</label>
+          <input type="date" name="target_date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Initial Progress %</label>
+          <input type="number" name="progress" min="0" max="100" value="0" class="form-input">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Add Goal</button>
+    </form>
+  </div>
+
+  <!-- Goals List -->
+  <div class="main-content-area">
+    {% if goals %}
+      <div class="goals-list">
+        {% for goal in goals %}
+          {% set days_left = (goal.target_date - today).days if goal.target_date else None %}
+          <div class="goal-card {% if goal.status == 'completed' %}goal-done{% endif %}">
+            <div class="goal-card-header">
+              <div class="goal-card-title">{{ goal.title }}</div>
+              <div class="goal-card-badges">
+                <span class="badge badge-{{ goal.status }}">{{ goal.status.title() }}</span>
+                {% if days_left is not none %}
+                  <span class="badge {% if days_left < 0 %}badge-danger{% elif days_left <= 3 %}badge-warning{% else %}badge-info{% endif %}">
+                    {% if days_left < 0 %}{{ -days_left }}d overdue{% elif days_left == 0 %}Due Today{% else %}{{ days_left }}d left{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            {% if goal.description %}
+              <div class="goal-card-desc">{{ goal.description }}</div>
+            {% endif %}
+            <div class="goal-progress-section">
+              <div class="progress-label">
+                <span>Progress</span>
+                <span>{{ goal.progress }}%</span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar {% if goal.progress >= 100 %}progress-complete{% endif %}"
+                     style="width:{{ goal.progress }}%"></div>
+              </div>
+            </div>
+            <div class="goal-card-actions">
+              <form action="{{ url_for('update_goal', goal_id=goal.id) }}" method="post" class="goal-update-form">
+                <input type="number" name="progress" min="0" max="100" value="{{ goal.progress }}"
+                       class="form-input compact-input" placeholder="Progress %">
+                <select name="status" class="form-input compact-input">
+                  <option value="active" {% if goal.status=='active' %}selected{% endif %}>Active</option>
+                  <option value="completed" {% if goal.status=='completed' %}selected{% endif %}>Completed</option>
+                  <option value="paused" {% if goal.status=='paused' %}selected{% endif %}>Paused</option>
+                </select>
+                <button type="submit" class="btn-action btn-success" title="Update">↑</button>
+              </form>
+              <form action="{{ url_for('delete_goal', goal_id=goal.id) }}" method="post"
+                    onsubmit="return confirm('Delete this goal?')">
+                <button class="btn-action btn-danger" title="Delete">✕</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🎯</div>
+        <div class="empty-title">No goals set yet</div>
+        <div class="empty-sub">Set your first academic goal using the form.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

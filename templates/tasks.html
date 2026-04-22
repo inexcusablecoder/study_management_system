@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Tasks{% endblock %}
+{% block page_title %}Task Tracker{% endblock %}
+
+{% block content %}
+<div class="page-layout">
+  <!-- Add Task Form -->
+  <div class="side-form-card">
+    <h3 class="form-card-title">➕ Add New Task</h3>
+    <form action="{{ url_for('add_task') }}" method="post" class="form-stack">
+      <div class="form-group">
+        <label>Task Title *</label>
+        <input type="text" name="title" placeholder="e.g. Complete Assignment" required class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="3" placeholder="Optional details..." class="form-input"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select name="subject_id" class="form-input">
+          <option value="">— No Subject —</option>
+          {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Priority</label>
+          <select name="priority" class="form-input">
+            <option value="low">🟢 Low</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="high">🟠 High</option>
+            <option value="urgent">🔴 Urgent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" name="due_date" class="form-input">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Add Task</button>
+    </form>
+  </div>
+
+  <!-- Task List -->
+  <div class="main-content-area">
+    <!-- Filters -->
+    <div class="filter-bar">
+      <form method="get" class="filter-form">
+        <select name="status" class="filter-select" onchange="this.form.submit()">
+          <option value="all" {% if status_filter=='all' %}selected{% endif %}>All Status</option>
+          <option value="pending" {% if status_filter=='pending' %}selected{% endif %}>⏳ Pending</option>
+          <option value="in_progress" {% if status_filter=='in_progress' %}selected{% endif %}>🔄 In Progress</option>
+          <option value="completed" {% if status_filter=='completed' %}selected{% endif %}>✅ Completed</option>
+        </select>
+        <select name="subject" class="filter-select" onchange="this.form.submit()">
+          <option value="all" {% if subject_filter=='all' %}selected{% endif %}>All Subjects</option>
+          {% for s in subjects %}
+            <option value="{{ s.id }}" {% if subject_filter==s.id|string %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="priority" class="filter-select" onchange="this.form.submit()">
+          <option value="all" {% if priority_filter=='all' %}selected{% endif %}>All Priorities</option>
+          <option value="urgent" {% if priority_filter=='urgent' %}selected{% endif %}>🔴 Urgent</option>
+          <option value="high" {% if priority_filter=='high' %}selected{% endif %}>🟠 High</option>
+          <option value="medium" {% if priority_filter=='medium' %}selected{% endif %}>🟡 Medium</option>
+          <option value="low" {% if priority_filter=='low' %}selected{% endif %}>🟢 Low</option>
+        </select>
+      </form>
+      <div class="task-count">{{ tasks|length }} task{{ 's' if tasks|length != 1 }}</div>
+    </div>
+
+    <!-- Task Cards -->
+    {% if tasks %}
+      <div class="task-list">
+        {% for task in tasks %}
+          {% set is_overdue = task.due_date and task.due_date < today and task.status != 'completed' %}
+          <div class="task-card {% if task.status == 'completed' %}task-done{% endif %} {% if is_overdue %}task-overdue{% endif %}">
+            <div class="task-left">
+              <div class="priority-dot priority-{{ task.priority }}" title="{{ task.priority }}"></div>
+              <div class="task-body">
+                <div class="task-title {% if task.status == 'completed' %}strikethrough{% endif %}">{{ task.title }}</div>
+                {% if task.description %}
+                  <div class="task-desc">{{ task.description }}</div>
+                {% endif %}
+                <div class="task-meta">
+                  {% if task.subject %}
+                    <span class="tag" style="background:{{ task.subject.color }}22;color:{{ task.subject.color }};border:1px solid {{ task.subject.color }}44">{{ task.subject.name }}</span>
+                  {% endif %}
+                  {% if task.due_date %}
+                    <span class="tag {% if is_overdue %}tag-danger{% endif %}">📅 {{ task.due_date.strftime('%b %d, %Y') }}</span>
+                  {% endif %}
+                  <span class="tag tag-{{ task.status }}">{{ task.status.replace('_', ' ').title() }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="task-actions">
+              {% if task.status != 'completed' %}
+                <form action="{{ url_for('update_task_status', task_id=task.id) }}" method="post" style="display:inline">
+                  <input type="hidden" name="status" value="completed">
+                  <button class="btn-action btn-success" title="Mark complete">✓</button>
+                </form>
+                {% if task.status == 'pending' %}
+                  <form action="{{ url_for('update_task_status', task_id=task.id) }}" method="post" style="display:inline">
+                    <input type="hidden" name="status" value="in_progress">
+                    <button class="btn-action btn-info" title="Start task">▶</button>
+                  </form>
+                {% endif %}
+              {% else %}
+                <form action="{{ url_for('update_task_status', task_id=task.id) }}" method="post" style="display:inline">
+                  <input type="hidden" name="status" value="pending">
+                  <button class="btn-action btn-warning" title="Reopen">↩</button>
+                </form>
+              {% endif %}
+              <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post" style="display:inline"
+                    onsubmit="return confirm('Delete this task?')">
+                <button class="btn-action btn-danger" title="Delete">✕</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No tasks found</div>
+        <div class="empty-sub">Add a task using the form on the left.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

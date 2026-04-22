@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | StudyFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+  <div class="auth-bg">
+    <!-- Animated orbs -->
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="auth-wrapper">
+    <!-- Left Panel -->
+    <div class="auth-left">
+      <div class="auth-brand">
+        <div class="brand-icon">📚</div>
+        <span class="brand-name">StudyFlow</span>
+      </div>
+      <h1 class="auth-headline">Master your<br><span class="gradient-text">academic journey</span></h1>
+      <p class="auth-sub">Track tasks, visualize progress, and stay on top of your studies — all in one place.</p>
+      <div class="auth-features">
+        <div class="feature-pill">✅ Task Tracker</div>
+        <div class="feature-pill">📊 Performance Charts</div>
+        <div class="feature-pill">🎯 Goal Setting</div>
+        <div class="feature-pill">⏱️ Study Sessions</div>
+      </div>
+      <div class="auth-stats">
+        <div class="auth-stat">
+          <div class="auth-stat-val">5+</div>
+          <div class="auth-stat-label">Subjects</div>
+        </div>
+        <div class="auth-stat">
+          <div class="auth-stat-val">∞</div>
+          <div class="auth-stat-label">Tasks</div>
+        </div>
+        <div class="auth-stat">
+          <div class="auth-stat-val">100%</div>
+          <div class="auth-stat-label">Free</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel — Login Form -->
+    <div class="auth-right">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <h2>Welcome back 👋</h2>
+          <p>Sign in to continue to StudyFlow</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="auth-flash auth-flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form" id="loginForm">
+          <div class="auth-form-group">
+            <label for="email">Email Address</label>
+            <div class="input-wrap">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="email" name="email" placeholder="you@example.com"
+                     required autocomplete="email" class="auth-input">
+            </div>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="password">
+              Password
+              <a href="#" class="forgot-link">Forgot password?</a>
+            </label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="password" name="password" placeholder="••••••••"
+                     required autocomplete="current-password" class="auth-input">
+              <button type="button" class="toggle-password" onclick="togglePwd('password', this)">👁</button>
+            </div>
+          </div>
+
+          <div class="auth-remember">
+            <label class="checkbox-label">
+              <input type="checkbox" name="remember" id="remember">
+              <span class="checkmark"></span>
+              Keep me signed in
+            </label>
+          </div>
+
+          <button type="submit" class="auth-btn" id="loginBtn">
+            <span>Sign In</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </form>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <div class="auth-switch">
+          Don't have an account?
+          <a href="{{ url_for('register') }}" class="auth-link">Create one free →</a>
+        </div>
+
+        <!-- Demo hint -->
+        <div class="demo-hint">
+          💡 <strong>New here?</strong> Register and we'll auto-populate sample data to explore.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePwd(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+      else { input.type = 'password'; btn.textContent = '👁'; }
+    }
+    // Animate button on submit
+    document.getElementById('loginForm').addEventListener('submit', function() {
+      const btn = document.getElementById('loginBtn');
+      btn.innerHTML = '<span>Signing in…</span>';
+      btn.disabled = true;
+    });
+  </script>
+</body>
+</html>

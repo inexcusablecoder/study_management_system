@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Subjects{% endblock %}
+{% block page_title %}Subject Manager{% endblock %}
+
+{% block content %}
+<div class="page-layout">
+  <!-- Add Subject Form -->
+  <div class="side-form-card">
+    <h3 class="form-card-title">➕ Add Subject</h3>
+    <form action="{{ url_for('add_subject') }}" method="post" class="form-stack">
+      <div class="form-group">
+        <label>Subject Name *</label>
+        <input type="text" name="name" placeholder="e.g. Mathematics" required class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="2" placeholder="Topics covered..." class="form-input"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Color</label>
+          <input type="color" name="color" value="#6366f1" class="form-input form-color">
+        </div>
+        <div class="form-group">
+          <label>Target Hours</label>
+          <input type="number" name="target_hours" min="0" step="0.5" value="10" class="form-input">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Add Subject</button>
+    </form>
+  </div>
+
+  <!-- Subject Cards -->
+  <div class="main-content-area">
+    {% if subject_stats %}
+      <div class="subject-grid">
+        {% for stat in subject_stats %}
+          <div class="subject-card">
+            <div class="subject-card-header" style="border-left: 4px solid {{ stat.subject.color }}">
+              <div class="subject-card-left">
+                <div class="subject-color-dot" style="background:{{ stat.subject.color }}"></div>
+                <div>
+                  <div class="subject-card-name">{{ stat.subject.name }}</div>
+                  <div class="subject-card-desc">{{ stat.subject.description or 'No description' }}</div>
+                </div>
+              </div>
+              <form action="{{ url_for('delete_subject', subject_id=stat.subject.id) }}" method="post"
+                    onsubmit="return confirm('Delete {{ stat.subject.name }} and all its data?')">
+                <button class="btn-action btn-danger" title="Delete subject">✕</button>
+              </form>
+            </div>
+            <div class="subject-card-stats">
+              <div class="subj-stat">
+                <div class="subj-stat-val">{{ stat.total_tasks }}</div>
+                <div class="subj-stat-label">Total Tasks</div>
+              </div>
+              <div class="subj-stat">
+                <div class="subj-stat-val" style="color:#10b981">{{ stat.completed_tasks }}</div>
+                <div class="subj-stat-label">Completed</div>
+              </div>
+              <div class="subj-stat">
+                <div class="subj-stat-val" style="color:#f59e0b">{{ stat.pending_tasks }}</div>
+                <div class="subj-stat-label">Pending</div>
+              </div>
+              <div class="subj-stat">
+                <div class="subj-stat-val" style="color:#6366f1">{{ stat.total_hours }}h</div>
+                <div class="subj-stat-label">Studied</div>
+              </div>
+            </div>
+            <div class="subject-card-progress">
+              <div class="progress-label">
+                <span>Completion</span>
+                <span>{{ stat.completion_rate }}%</span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar" style="width:{{ stat.completion_rate }}%;background:{{ stat.subject.color }}"></div>
+              </div>
+            </div>
+            {% if stat.subject.target_hours > 0 %}
+              <div class="subject-card-progress" style="margin-top:8px">
+                {% set pct = [[(stat.total_hours / stat.subject.target_hours * 100), 100]|min, 0]|max %}
+                <div class="progress-label">
+                  <span>Study Target</span>
+                  <span>{{ stat.total_hours }}h / {{ stat.subject.target_hours }}h</span>
+                </div>
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar" style="width:{{ pct }}%;background:{{ stat.subject.color }}88"></div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">No subjects yet</div>
+        <div class="empty-sub">Add your first subject using the form.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

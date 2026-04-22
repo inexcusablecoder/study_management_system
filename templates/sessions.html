@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Study Sessions{% endblock %}
+{% block page_title %}Study Sessions{% endblock %}
+
+{% block content %}
+<div class="page-layout">
+  <!-- Log Session Form -->
+  <div class="side-form-card">
+    <h3 class="form-card-title">⏱️ Log Study Session</h3>
+    <form action="{{ url_for('add_session') }}" method="post" class="form-stack">
+      <div class="form-group">
+        <label>Subject</label>
+        <select name="subject_id" class="form-input">
+          <option value="">— General —</option>
+          {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" name="date" value="{{ today }}" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Duration (minutes)</label>
+        <input type="number" name="duration_minutes" min="1" placeholder="e.g. 60" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label>Productivity Rating</label>
+        <div class="star-rating-wrap">
+          {% for i in range(1, 6) %}
+            <input type="radio" name="productivity_rating" id="star{{ i }}" value="{{ i }}" {% if i == 3 %}checked{% endif %}>
+            <label for="star{{ i }}" class="star-label">★</label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" rows="3" placeholder="What did you study?" class="form-input"></textarea>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Log Session</button>
+    </form>
+  </div>
+
+  <!-- Session List -->
+  <div class="main-content-area">
+    {% if sessions %}
+      <div class="session-list">
+        {% for session in sessions %}
+          <div class="session-card">
+            <div class="session-date-col">
+              <div class="session-day">{{ session.date.strftime('%d') }}</div>
+              <div class="session-month">{{ session.date.strftime('%b %Y') }}</div>
+            </div>
+            <div class="session-divider" style="background:{{ session.subject.color if session.subject else '#6366f1' }}"></div>
+            <div class="session-body">
+              <div class="session-subject">
+                {% if session.subject %}
+                  <span class="tag" style="background:{{ session.subject.color }}22;color:{{ session.subject.color }}">{{ session.subject.name }}</span>
+                {% else %}
+                  <span class="tag">General</span>
+                {% endif %}
+                <span class="session-duration">⏱ {{ session.duration_minutes }} min</span>
+              </div>
+              {% if session.notes %}
+                <div class="session-notes">{{ session.notes }}</div>
+              {% endif %}
+              <div class="session-stars">
+                {% for i in range(1, 6) %}
+                  <span class="star {% if i <= session.productivity_rating %}star-filled{% endif %}">★</span>
+                {% endfor %}
+              </div>
+            </div>
+            <form action="{{ url_for('delete_session', session_id=session.id) }}" method="post"
+                  onsubmit="return confirm('Delete this session?')">
+              <button class="btn-action btn-danger" title="Delete">✕</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">⏱️</div>
+        <div class="empty-title">No sessions logged yet</div>
+        <div class="empty-sub">Log your first study session using the form.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

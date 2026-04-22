@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+  <!-- Stat Cards Row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg,#6366f1,#8b5cf6)">✅</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ completed_tasks }}</div>
+        <div class="stat-label">Tasks Completed</div>
+      </div>
+      <div class="stat-badge badge-success">{{ completion_rate }}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg,#f59e0b,#ef4444)">⏳</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ pending_tasks + in_progress_tasks }}</div>
+        <div class="stat-label">Tasks Remaining</div>
+      </div>
+      <div class="stat-badge badge-warning">{{ in_progress_tasks }} active</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg,#10b981,#059669)">📚</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ today_hours }}h</div>
+        <div class="stat-label">Studied Today</div>
+      </div>
+      <div class="stat-badge badge-info">{{ total_week_hours }}h this week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg,#f43f5e,#e11d48)">🚨</div>
+      <div class="stat-info">
+        <div class="stat-value">{{ overdue_tasks }}</div>
+        <div class="stat-label">Overdue Tasks</div>
+      </div>
+      <div class="stat-badge badge-danger">Action needed</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="chart-card wide">
+      <div class="card-header">
+        <h3>📈 Study Hours — Last 7 Days</h3>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header">
+        <h3>🎯 Subject Distribution</h3>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="subjectChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Row: Due Today + Goals + Subjects -->
+  <div class="bottom-row">
+    <!-- Due Today -->
+    <div class="list-card">
+      <div class="card-header">
+        <h3>📅 Due Today ({{ due_today|length }})</h3>
+        <a href="{{ url_for('tasks') }}" class="btn-link">View All →</a>
+      </div>
+      {% if due_today %}
+        {% for task in due_today %}
+          <div class="mini-task-row">
+            <div class="priority-dot priority-{{ task.priority }}"></div>
+            <div class="mini-task-info">
+              <span class="mini-task-title">{{ task.title }}</span>
+              {% if task.subject %}
+                <span class="mini-tag" style="background:{{ task.subject.color }}22;color:{{ task.subject.color }}">{{ task.subject.name }}</span>
+              {% endif %}
+            </div>
+            <form action="{{ url_for('update_task_status', task_id=task.id) }}" method="post">
+              <input type="hidden" name="status" value="completed">
+              <button class="btn-icon-sm" title="Mark complete">✓</button>
+            </form>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state-sm">🎉 No tasks due today!</div>
+      {% endif %}
+    </div>
+
+    <!-- Goals Progress -->
+    <div class="list-card">
+      <div class="card-header">
+        <h3>🎯 Active Goals</h3>
+        <a href="{{ url_for('goals') }}" class="btn-link">View All →</a>
+      </div>
+      {% for goal in goals %}
+        <div class="goal-mini-row">
+          <div class="goal-mini-header">
+            <span class="goal-mini-title">{{ goal.title }}</span>
+            <span class="goal-mini-pct">{{ goal.progress }}%</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" style="width:{{ goal.progress }}%"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Subjects Quick View -->
+    <div class="list-card">
+      <div class="card-header">
+        <h3>📖 Subjects</h3>
+        <a href="{{ url_for('subjects') }}" class="btn-link">View All →</a>
+      </div>
+      {% for subject in subjects %}
+        <div class="subject-mini-row">
+          <div class="subject-dot" style="background:{{ subject.color }}"></div>
+          <span class="subject-mini-name">{{ subject.name }}</span>
+          <span class="subject-mini-tasks">{{ subject.tasks|length }} tasks</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dailyLabels = {{ daily_labels|safe }};
+const dailyMinutes = {{ daily_minutes|safe }};
+const subjData = {{ subj_data|safe }};
+
+// Weekly Bar Chart
+const wCtx = document.getElementById('weeklyChart').getContext('2d');
+new Chart(wCtx, {
+  type: 'bar',
+  data: {
+    labels: dailyLabels,
+    datasets: [{
+      label: 'Hours Studied',
+      data: dailyMinutes,
+      backgroundColor: 'rgba(99,102,241,0.7)',
+      borderColor: '#6366f1',
+      borderWidth: 2,
+      borderRadius: 8,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y}h` } } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: v => v + 'h' }, beginAtZero: true }
+    }
+  }
+});
+
+// Subject Doughnut
+if (subjData.length > 0) {
+  const sCtx = document.getElementById('subjectChart').getContext('2d');
+  new Chart(sCtx, {
+    type: 'doughnut',
+    data: {
+      labels: subjData.map(d => d.name),
+      datasets: [{
+        data: subjData.map(d => d.hours),
+        backgroundColor: subjData.map(d => d.color),
+        borderColor: '#0f172a',
+        borderWidth: 3,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 12, font: { size: 12 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}h` } }
+      },
+      cutout: '65%'
+    }
+  });
+}
+</script>
+{% endblock %}
