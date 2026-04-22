@@ -260,6 +260,23 @@ def add_subject():
     return redirect(url_for('subjects'))
 
 
+@app.route('/subjects/edit/<int:subject_id>', methods=['POST'])
+@login_required
+def edit_subject(subject_id):
+    subject = Subject.query.filter_by(id=subject_id, user_id=current_user.id).first_or_404()
+    name = request.form.get('name', '').strip()
+    if not name:
+        flash('Subject name is required.', 'error')
+        return redirect(url_for('subjects'))
+    subject.name         = name
+    subject.description  = request.form.get('description', '')
+    subject.color        = request.form.get('color', subject.color)
+    subject.target_hours = float(request.form.get('target_hours', subject.target_hours) or 0)
+    db.session.commit()
+    flash(f'Subject "{name}" updated!', 'success')
+    return redirect(url_for('subjects'))
+
+
 @app.route('/subjects/delete/<int:subject_id>', methods=['POST'])
 @login_required
 def delete_subject(subject_id):
@@ -391,6 +408,23 @@ def update_goal(goal_id):
     goal.progress = int(request.form.get('progress', goal.progress))
     goal.status   = request.form.get('status', goal.status)
     db.session.commit()
+    return redirect(url_for('goals'))
+
+
+@app.route('/goals/edit/<int:goal_id>', methods=['POST'])
+@login_required
+def edit_goal(goal_id):
+    goal = Goal.query.filter_by(id=goal_id, user_id=current_user.id).first_or_404()
+    title = request.form.get('title', '').strip()
+    if not title:
+        flash('Goal title is required.', 'error')
+        return redirect(url_for('goals'))
+    due_str = request.form.get('target_date', '')
+    goal.title       = title
+    goal.description = request.form.get('description', '')
+    goal.target_date = datetime.strptime(due_str, '%Y-%m-%d').date() if due_str else None
+    db.session.commit()
+    flash('Goal updated!', 'success')
     return redirect(url_for('goals'))
 
 
